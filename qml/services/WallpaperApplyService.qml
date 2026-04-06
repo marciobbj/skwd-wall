@@ -331,10 +331,13 @@ QtObject {
         var outputs = _matugenOutputFiles()
         var hashFiles = outputs.map(function(f) { return JSON.stringify(f) }).join(" ")
         var before = hashFiles ? "_BEFORE=$(md5sum " + hashFiles + " 2>/dev/null | sort); " : ""
-        var matugen = "command -v matugen >/dev/null && matugen -c " +
-            JSON.stringify(_matugenConfig) +
-            " image -t " + JSON.stringify(matugenScheme) +
-            " --source-color-index 0 " + JSON.stringify(imagePath) + " || true"
+        var imgArg = " image -t " + JSON.stringify(matugenScheme) +
+            " --source-color-index 0 " + JSON.stringify(imagePath)
+        var defaultCfg = Config.defaultMatugenConfig
+        var matugen = "command -v matugen >/dev/null && { " +
+            "matugen -c " + JSON.stringify(_matugenConfig) + imgArg + "; " +
+            (defaultCfg ? "[ -f " + JSON.stringify(defaultCfg) + " ] && matugen -c " + JSON.stringify(defaultCfg) + imgArg + "; " : "") +
+            "true; } || true"
         if (!hashFiles) return matugen
         var after = "_AFTER=$(md5sum " + hashFiles + " 2>/dev/null | sort); "
         return before + matugen + "; " + after + '[ "$_BEFORE" = "$_AFTER" ] && exit 2; exit 0'

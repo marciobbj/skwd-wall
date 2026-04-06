@@ -80,6 +80,7 @@ QtObject {
     readonly property string colorSource: _data.colorSource ?? "ollama"
 
     readonly property string matugenConfig: cacheDir + "/matugen-config.toml"
+    readonly property string defaultMatugenConfig: _resolve(_data.defaultMatugenConfig ?? "~/.config/matugen/config.toml")
 
     readonly property var integrations: _data.integrations ?? []
     onIntegrationsChanged: _generateMatugenConfig()
