@@ -393,8 +393,16 @@ QtObject {
             var cmd = cmds[i]
             if (!cmd) continue
             cmd = cmd.replace(/%type%/g, type).replace(/%name%/g, name).replace(/%path%/g, path)
-            _runReload(cmd)
+            _runDetached(cmd)
         }
+    }
+
+    function _runDetached(cmd) {
+        console.log("runDetached:", cmd)
+        var proc = reloadComponent.createObject(service)
+        proc.command = ["sh", "-c", "nohup setsid sh -c " + JSON.stringify(cmd) + " </dev/null >/dev/null 2>&1 &"]
+        proc.exited.connect(function() { proc.destroy() })
+        proc.running = true
     }
 
     function _basename(path) {
