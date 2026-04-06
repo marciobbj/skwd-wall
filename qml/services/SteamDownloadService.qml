@@ -104,15 +104,15 @@ QtObject {
     downloadStatus = status
     _activeDownloads[safeId] = true
     _downloadQueue.push(safeId)
-    queueLength = _downloadQueue.length + _runningDownloads
+    queueLength = _downloadQueue.length + _batchRemaining
     _writeStatus()
     _drainDownloadQueue()
   }
 
   property var _activeDownloads: ({})
   property var _downloadQueue: []
-  property int _runningDownloads: 0
-  readonly property int _maxConcurrent: 1
+  property bool _batchRunning: false
+  property int _batchRemaining: 0
 
   function retryAuthFailed() {
     if (_failedAuth.length === 0) return
@@ -127,37 +127,47 @@ QtObject {
       _activeDownloads[ids[i]] = true
       _downloadQueue.push(ids[i])
     }
-    queueLength = _downloadQueue.length + _runningDownloads
+    queueLength = _downloadQueue.length + _batchRemaining
     _writeStatus()
     _drainDownloadQueue()
   }
 
   function _drainDownloadQueue() {
-    while (_runningDownloads < _maxConcurrent && _downloadQueue.length > 0) {
-      var id = _downloadQueue.shift()
-      _runningDownloads++
-      _spawnDownload(id)
-    }
-    queueLength = _downloadQueue.length + _runningDownloads
+    if (_batchRunning || _downloadQueue.length === 0) return
+    var batch = _downloadQueue.slice()
+    _downloadQueue = []
+    _spawnBatch(batch)
   }
 
-  function _spawnDownload(workshopId) {
-    activeId = workshopId
+  function _spawnBatch(ids) {
+    _batchRunning = true
+    _batchRemaining = ids.length
+    activeId = ids[0]
     activeMessage = "Starting steamcmd..."
     var s = Object.assign({}, downloadStatus)
-    s[workshopId] = "downloading"
+    s[ids[0]] = "downloading"
     downloadStatus = s
+    queueLength = ids.length + _downloadQueue.length
     _writeStatus()
 
+    console.log("[SteamDownloadService] spawning batch of " + ids.length + " items: " + ids.join(", "))
+
     var comp = Qt.createComponent("../wallpaper/SteamWorkshopDownloadProc.qml")
-    var expectedSz = svc._pendingSizes[workshopId] || 0
+    var sizes = {}
+    for (var j = 0; j < ids.length; j++) {
+      if (svc._pendingSizes[ids[j]]) {
+        sizes[ids[j]] = svc._pendingSizes[ids[j]]
+        delete svc._pendingSizes[ids[j]]
+      }
+    }
     var proc = comp.createObject(svc, {
-      workshopId: workshopId,
+      workshopIds: ids,
       steamDir: Config.weDir.replace(/\/steamapps\/workshop\/content\/431960\/?$/, ""),
       steamUsername: Config.steamUsername,
-      expectedSize: expectedSz
+      expectedSizes: sizes
     })
-    if (expectedSz > 0) delete svc._pendingSizes[workshopId]
+    proc.command = proc.buildCommand()
+
     proc.onProgressUpdate.connect(function(id, pct) {
       var p = Object.assign({}, downloadProgress)
       p[id] = pct
@@ -166,36 +176,66 @@ QtObject {
       _writeStatus()
     })
     proc.onStatusMessage.connect(function(id, msg) {
+      activeId = id
       activeMessage = msg
+      if (downloadStatus[id] === "queued") {
+        var st = Object.assign({}, downloadStatus)
+        st[id] = "downloading"
+        downloadStatus = st
+      }
       _writeStatus()
     })
     proc.onCredentialError.connect(function(id) {
-      console.log("[SteamDownloadService] credential error for " + id + ", pausing queue")
+      console.log("[SteamDownloadService] credential error, pausing queue")
       svc.authPaused = true
     })
-    proc.onDone.connect(function(id, success) {
-      _runningDownloads--
+    proc.onItemDone.connect(function(id, success) {
+      _batchRemaining--
       var st = Object.assign({}, downloadStatus)
       if (success) {
         st[id] = "done"
-        activeMessage = "Download complete"
         if (svc.authPaused) {
           svc.authPaused = false
           svc._failedAuth = []
         }
-      } else if (svc.authPaused) {
-        st[id] = "auth_error"
-        activeMessage = "Steam login required"
-        _failedAuth.push(id)
       } else {
         st[id] = "error"
-        activeMessage = "Download failed"
       }
       downloadStatus = st
-      downloadFinished(id)
       delete _activeDownloads[id]
+      downloadFinished(id)
+      queueLength = _downloadQueue.length + _batchRemaining
+      // Advance to the next item in the batch
+      var nextId = proc.currentId
+      if (nextId && nextId !== id && _batchRemaining > 0) {
+        activeId = nextId
+        activeMessage = "Downloading workshop item..."
+        var st2 = Object.assign({}, downloadStatus)
+        st2[nextId] = "downloading"
+        downloadStatus = st2
+      }
       _writeStatus()
+    })
+    proc.onBatchDone.connect(function(success) {
+      // Mark any items not resolved by itemDone
+      for (var k = 0; k < ids.length; k++) {
+        var sid = ids[k]
+        if (downloadStatus[sid] === "downloading" || downloadStatus[sid] === "queued") {
+          var st = Object.assign({}, downloadStatus)
+          if (svc.authPaused) {
+            st[sid] = "auth_error"
+            _failedAuth.push(sid)
+          } else {
+            st[sid] = "error"
+          }
+          downloadStatus = st
+          delete _activeDownloads[sid]
+        }
+      }
+      _batchRunning = false
+      _batchRemaining = 0
       proc.destroy()
+
       if (svc.authPaused) {
         while (_downloadQueue.length > 0) {
           var qid = _downloadQueue.shift()

@@ -276,17 +276,40 @@ Item {
                           : Qt.rgba(1, 1, 1, 0.08))
 
       Rectangle {
+        id: _progressFill
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         visible: !browser.swService || !browser.swService.authPaused
-        width: parent.width * (browser.swService && browser.swService.activeDownloadId
+        property real _realProgress: browser.swService && browser.swService.activeDownloadId
           ? (browser.swService.downloadProgress[browser.swService.activeDownloadId] || 0)
-          : 0)
+          : 0
+        property bool _hasProgress: _realProgress > 0.01
+        width: _hasProgress ? parent.width * _realProgress : 0
         radius: 4
         color: browser.colors ? Qt.rgba(browser.colors.primary.r, browser.colors.primary.g, browser.colors.primary.b, 0.15)
                               : Qt.rgba(1, 0.53, 0, 0.1)
         Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+      }
+
+      Rectangle {
+        id: _indeterminateShimmer
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: parent.width * 0.25
+        radius: 4
+        visible: downloadStatusBar._dlBarVisible && !_progressFill._hasProgress && !(browser.swService && browser.swService.authPaused)
+        color: browser.colors ? Qt.rgba(browser.colors.primary.r, browser.colors.primary.g, browser.colors.primary.b, 0.12)
+                              : Qt.rgba(1, 0.53, 0, 0.08)
+        property real _pos: 0
+        x: _pos * (parent.width - width)
+
+        SequentialAnimation on _pos {
+          running: _indeterminateShimmer.visible
+          loops: Animation.Infinite
+          NumberAnimation { from: 0; to: 1; duration: 1500; easing.type: Easing.InOutSine }
+          NumberAnimation { from: 1; to: 0; duration: 1500; easing.type: Easing.InOutSine }
+        }
       }
 
       Row {
