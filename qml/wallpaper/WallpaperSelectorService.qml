@@ -49,6 +49,7 @@ QtObject {
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i]
       var type = r.type, name = r.name, thumb = r.thumb
+      if (!name || !thumb) continue
       var videoFile = r.video_file || "", weId = r.we_id || ""
       var mtime = r.mtime || 0, hue = r.hue, sat = r.sat || 0
       items.push({
