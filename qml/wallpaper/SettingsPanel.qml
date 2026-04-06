@@ -1127,6 +1127,13 @@ Item {
         width: parent.width
         spacing: 8
 
+      SettingsToggle {
+        colors: settingsPanel.colors
+        label: "Run on startup restore"
+        checked: Config.postProcessOnRestore
+        onToggle: function(v) { settingsPanel._saveConfigKey("postProcessOnRestore", v) }
+      }
+
       Text {
         text: "COMMANDS"
         font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5

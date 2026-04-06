@@ -156,4 +156,5 @@ QtObject {
     readonly property bool wallpaperMute: _data.wallpaperMute !== false
 
     readonly property var postProcessing: _data.postProcessing ?? []
+    readonly property bool postProcessOnRestore: _data.postProcessOnRestore === true
 }

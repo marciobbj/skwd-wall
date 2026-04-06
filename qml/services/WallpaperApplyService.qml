@@ -36,8 +36,10 @@ QtObject {
         if (data.wallpaperMute !== undefined) wallpaperMute = data.wallpaperMute
     }
 
+    property bool _restoring: false
+
     signal wallpaperApplied(string type, string name, string path)
-    onWallpaperApplied: _runPostProcessing(type, name, path)
+    onWallpaperApplied: if (!_restoring || Config.postProcessOnRestore) _runPostProcessing(type, name, path)
 
     function applyStatic(path) {
         console.log("WallpaperApplyService.applyStatic:", path, "wallpaperDir:", wallpaperDir)
@@ -93,6 +95,7 @@ QtObject {
         _restoreRequested = false
         var text = _stateFile.text().trim()
         if (!text) return
+        _restoring = true
         try {
             var state = JSON.parse(text)
             if (state.type === "static" && state.path)
@@ -104,6 +107,7 @@ QtObject {
         } catch(e) {
             console.log("WallpaperApplyService: restore failed:", e)
         }
+        _restoring = false
     }
 
     function _saveState(type, path, weId) {
