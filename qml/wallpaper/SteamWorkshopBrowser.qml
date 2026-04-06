@@ -25,15 +25,16 @@ Item {
   height: browserVisible ? implicitHeight : 0
   Behavior on height { NumberAnimation { duration: Style.animEnter; easing.type: Easing.OutCubic } }
 
-  readonly property real _gridCellW: Config.wallhavenThumbWidth + 8
-  readonly property real _gridCellH: Config.wallhavenThumbHeight + 8
-  readonly property real _gridTotalW: _gridCellW * Config.wallhavenColumns
-  implicitHeight: contentCol.implicitHeight + 22 + _gridCellH * Config.wallhavenRows
+  readonly property real _gridCellW: Config.steamThumbWidth + 8
+  readonly property real _gridCellH: Config.steamThumbHeight + 8
+  readonly property real _gridTotalW: _gridCellW * Config.steamColumns
+  implicitHeight: contentCol.implicitHeight + 22 + _gridCellH * Config.steamRows
 
   MouseArea { anchors.fill: parent }
 
   Column {
     id: contentCol
+    z: 10
     width: browser._gridTotalW
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
@@ -101,54 +102,53 @@ Item {
 
       Item { width: 8; height: 1 }
 
-      Repeater {
-        model: browser.swService && browser.swService.sorting === "trend" ? [
-          { key: 1,  label: "Day" },
-          { key: 7,  label: "Week" },
-          { key: 30, label: "Month" },
-          { key: 90, label: "3M" },
-          { key: 180, label: "6M" },
-          { key: 365, label: "Year" }
-        ] : []
-        FilterButton {
-          colors: browser.colors; label: modelData.label; skew: 8
-          isActive: browser.swService ? browser.swService.trendDays === modelData.key : false
-          onClicked: { browser.swService.trendDays = modelData.key; browser.swService.search(1) }
+      FilterDropdown {
+        visible: browser.swService && browser.swService.sorting === "trend"
+        colors: browser.colors; skew: 8
+        label: "PERIOD"
+        value: browser.swService ? browser.swService.trendDays : 7
+        displayValue: {
+          if (!browser.swService) return "Week"
+          var map = { 1: "Day", 7: "Week", 30: "Month", 90: "3M", 180: "6M", 365: "Year" }
+          return map[browser.swService.trendDays] || "Week"
         }
-      }
-
-      Item { width: 8; height: 1 }
-
-      Repeater {
         model: [
-          { key: "Video",       label: "Video" },
-          { key: "Web",         label: "Web" },
-          { key: "Scene",       label: "Scene" },
-          { key: "Application", label: "App" },
-          { key: "",            label: "All Types" }
+          { key: "1",   label: "Day" },
+          { key: "7",   label: "Week" },
+          { key: "30",  label: "Month" },
+          { key: "90",  label: "3M" },
+          { key: "180", label: "6M" },
+          { key: "365", label: "Year" }
         ]
-        FilterButton {
-          colors: browser.colors; label: modelData.label; skew: 8
-          isActive: browser.swService ? browser.swService.requiredType === modelData.key : false
-          onClicked: { browser.swService.requiredType = modelData.key; browser.swService.search(1) }
-        }
-      }
-
-      Item { width: 8; height: 1 }
-
-      Text {
-        visible: browser.swService ? browser.swService.loading : false
-        text: "󰔟"
-        font.family: Style.fontFamilyNerdIcons; font.pixelSize: 16
-        color: browser.colors ? browser.colors.primary : Style.fallbackAccent
-        anchors.verticalCenter: parent.verticalCenter
-        RotationAnimation on rotation { from: 0; to: 360; duration: Style.animSpin; loops: Animation.Infinite; running: parent.visible }
+        onSelected: function(key) { browser.swService.trendDays = parseInt(key); browser.swService.search(1) }
       }
     }
 
     Row {
+      z: 10
       spacing: -6
       anchors.horizontalCenter: parent.horizontalCenter
+
+      FilterDropdown {
+        colors: browser.colors; skew: 8
+        label: "TYPE"
+        value: browser.swService ? browser.swService.requiredType : ""
+        displayValue: {
+          if (!browser.swService || browser.swService.requiredType === "") return "All Types"
+          var map = { "Video": "Video", "Web": "Web", "Scene": "Scene", "Application": "App" }
+          return map[browser.swService.requiredType] || browser.swService.requiredType
+        }
+        model: [
+          { key: "",            label: "All Types" },
+          { key: "Video",       label: "Video" },
+          { key: "Web",         label: "Web" },
+          { key: "Scene",       label: "Scene" },
+          { key: "Application", label: "App" }
+        ]
+        onSelected: function(key) { browser.swService.requiredType = key; browser.swService.search(1) }
+      }
+
+      Item { width: 14; height: 1 }
 
       Text {
         text: "CONTENT"
@@ -173,16 +173,38 @@ Item {
 
       Item { width: 14; height: 1 }
 
-      Text {
-        text: "CATEGORY"
-        font.family: Style.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; font.letterSpacing: 1.2
-        color: browser.colors ? Qt.rgba(browser.colors.surfaceText.r, browser.colors.surfaceText.g, browser.colors.surfaceText.b, 0.35) : Qt.rgba(1,1,1,0.25)
-        anchors.verticalCenter: parent.verticalCenter
+      FilterDropdown {
+        colors: browser.colors; skew: 8
+        label: "RESOLUTION"
+        value: browser.swService ? browser.swService.requiredResolution : ""
+        displayValue: {
+          if (!browser.swService || browser.swService.requiredResolution === "") return "Any"
+          var map = { "1920 x 1080": "1080p", "2560 x 1440": "2K", "3840 x 2160": "4K", "2560 x 1080": "UW", "3440 x 1440": "UWQHD", "3840 x 1080": "Dual", "5120 x 1440": "Dual QHD" }
+          return map[browser.swService.requiredResolution] || browser.swService.requiredResolution
+        }
+        model: [
+          { key: "",                label: "Any" },
+          { key: "1920 x 1080",    label: "1080p" },
+          { key: "2560 x 1440",    label: "2K" },
+          { key: "3840 x 2160",    label: "4K" },
+          { key: "2560 x 1080",    label: "UW" },
+          { key: "3440 x 1440",    label: "UWQHD" },
+          { key: "3840 x 1080",    label: "Dual" },
+          { key: "5120 x 1440",    label: "Dual QHD" }
+        ]
+        onSelected: function(key) { browser.swService.requiredResolution = key; browser.swService.search(1) }
       }
 
-      Item { width: 10; height: 1 }
+      Item { width: 14; height: 1 }
 
-      Repeater {
+      FilterDropdown {
+        colors: browser.colors; skew: 8
+        label: "CATEGORY"
+        value: browser.swService ? browser.swService.requiredTag : ""
+        displayValue: {
+          if (!browser.swService || browser.swService.requiredTag === "") return "All"
+          return browser.swService.requiredTag
+        }
         model: [
           { key: "",           label: "All" },
           { key: "Abstract",   label: "Abstract" },
@@ -205,44 +227,7 @@ Item {
           { key: "Technology", label: "Technology" },
           { key: "Vehicle",    label: "Vehicle" }
         ]
-        FilterButton {
-          colors: browser.colors; label: modelData.label; skew: 8
-          isActive: browser.swService ? browser.swService.requiredTag === modelData.key : false
-          onClicked: { browser.swService.requiredTag = modelData.key; browser.swService.search(1) }
-        }
-      }
-
-    }
-
-    Row {
-      spacing: -6
-      anchors.horizontalCenter: parent.horizontalCenter
-
-      Text {
-        text: "RESOLUTION"
-        font.family: Style.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; font.letterSpacing: 1.2
-        color: browser.colors ? Qt.rgba(browser.colors.surfaceText.r, browser.colors.surfaceText.g, browser.colors.surfaceText.b, 0.35) : Qt.rgba(1,1,1,0.25)
-        anchors.verticalCenter: parent.verticalCenter
-      }
-
-      Item { width: 10; height: 1 }
-
-      Repeater {
-        model: [
-          { key: "",                label: "Any" },
-          { key: "1920 x 1080",    label: "1080p" },
-          { key: "2560 x 1440",    label: "2K" },
-          { key: "3840 x 2160",    label: "4K" },
-          { key: "2560 x 1080",    label: "UW" },
-          { key: "3440 x 1440",    label: "UWQHD" },
-          { key: "3840 x 1080",    label: "Dual" },
-          { key: "5120 x 1440",    label: "Dual QHD" }
-        ]
-        FilterButton {
-          colors: browser.colors; label: modelData.label; skew: 8
-          isActive: browser.swService ? browser.swService.requiredResolution === modelData.key : false
-          onClicked: { browser.swService.requiredResolution = modelData.key; browser.swService.search(1) }
-        }
+        onSelected: function(key) { browser.swService.requiredTag = key; browser.swService.search(1) }
       }
     }
 
@@ -492,7 +477,7 @@ Item {
           if (resultsGrid._lastScrollDir >= 0) {
             _needsEntryAnim = true
             thumbTranslate.y = 30
-            var col = index % Config.wallhavenColumns
+            var col = index % Config.steamColumns
             _entryDelay.interval = col * 35
             _entryDelay.start()
           } else {
@@ -544,8 +529,8 @@ Item {
             asynchronous: true
             smooth: true
             cache: false
-            sourceSize.width: Config.wallhavenThumbWidth
-            sourceSize.height: Config.wallhavenThumbHeight
+            sourceSize.width: Config.steamThumbWidth
+            sourceSize.height: Config.steamThumbHeight
           }
 
           Rectangle {

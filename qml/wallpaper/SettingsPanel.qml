@@ -48,11 +48,19 @@ Item {
     target: Config
     function onOllamaEnabledChanged() {
       if (!Config.ollamaEnabled && settingsPanel.activeTab === "ollama")
-        settingsPanel.activeTab = "features"
+        settingsPanel.activeTab = "general"
     }
     function onMatugenEnabledChanged() {
       if (!Config.matugenEnabled && settingsPanel.activeTab === "matugen")
-        settingsPanel.activeTab = "features"
+        settingsPanel.activeTab = "general"
+    }
+    function onSteamEnabledChanged() {
+      if (!Config.steamEnabled && settingsPanel.activeTab === "steam")
+        settingsPanel.activeTab = "general"
+    }
+    function onWallhavenEnabledChanged() {
+      if (!Config.wallhavenEnabled && settingsPanel.activeTab === "wallhaven")
+        settingsPanel.activeTab = "general"
     }
   }
 
@@ -226,12 +234,12 @@ Item {
           { key: "selector",  label: "SELECTOR" },
           { key: "general",   label: "GENERAL" },
           { key: "paths",     label: "PATHS" },
-          { key: "wallhaven", label: "WALLHAVEN" },
-          { key: "features",  label: "FEATURES" },
           { key: "performance", label: "PERFORMANCE" },
           { key: "postprocessing", label: "POSTPROCESSING" },
           { key: "keybinds",  label: "KEYBINDS" }
         ]
+        if (Config.wallhavenEnabled) tabs.push({ key: "wallhaven", label: "WALLHAVEN" })
+        if (Config.steamEnabled) tabs.push({ key: "steam", label: "STEAM" })
         if (Config.ollamaEnabled) tabs.push({ key: "ollama", label: "OLLAMA" })
         if (Config.matugenEnabled) tabs.push({ key: "matugen", label: "MATUGEN" })
         return tabs
@@ -261,7 +269,7 @@ Item {
       if (settingsPanel.activeTab === "ollama") return ollamaContent.implicitHeight
       if (settingsPanel.activeTab === "paths") return pathsContent.implicitHeight
       if (settingsPanel.activeTab === "wallhaven") return wallhavenContent.implicitHeight
-      if (settingsPanel.activeTab === "features") return featuresContent.implicitHeight
+      if (settingsPanel.activeTab === "steam") return steamContent.implicitHeight
       if (settingsPanel.activeTab === "performance") return performanceContent.implicitHeight
       if (settingsPanel.activeTab === "postprocessing") return Math.min(_postprocessingInner.implicitHeight, 360)
       if (settingsPanel.activeTab === "matugen") return Math.min(_matugenInner.implicitHeight, 360)
@@ -467,25 +475,51 @@ Item {
         spacing: 6
 
         Text {
-          text: "STEAM"
+          text: "FEATURES"
           font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
           color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
         }
 
-        SettingsTextInput {
+        SettingsToggle {
           colors: settingsPanel.colors
-          label: "API key"
-          value: Config.steamApiKey
-          placeholder: "Steam Web API key"
-          onCommit: function(v) { settingsPanel._saveConfigKey("steam.apiKey", v) }
+          label: "Matugen (Colour theming)"
+          checked: Config.matugenEnabled
+          onToggle: function(v) { settingsPanel._saveConfigKey("features.matugen", v) }
         }
 
-        SettingsTextInput {
+        SettingsToggle {
           colors: settingsPanel.colors
-          label: "Username"
-          value: Config.steamUsername
-          placeholder: "Steam username"
-          onCommit: function(v) { settingsPanel._saveConfigKey("steam.username", v) }
+          label: "Ollama (Local LLM colour & tagging)"
+          checked: Config.ollamaEnabled
+          onToggle: function(v) { settingsPanel._saveConfigKey("features.ollama", v) }
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Steam Workshop browser"
+          checked: Config.steamEnabled
+          onToggle: function(v) { settingsPanel._saveConfigKey("features.steam", v) }
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Wallhaven browser"
+          checked: Config.wallhavenEnabled
+          onToggle: function(v) { settingsPanel._saveConfigKey("features.wallhaven", v) }
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Mute wallpaper audio"
+          checked: Config.wallpaperMute
+          onToggle: function(v) { settingsPanel._saveConfigKey("wallpaperMute", v) }
+        }
+
+        SettingsToggle {
+          colors: settingsPanel.colors
+          label: "Show colour dots"
+          checked: Config.wallpaperColorDots
+          onToggle: function(v) { settingsPanel._saveConfigKey("components.wallpaperSelector.showColorDots", v) }
         }
       }
     }
@@ -736,78 +770,88 @@ Item {
     }
 
     Row {
-      id: featuresContent
+      id: steamContent
       anchors.left: parent.left
       anchors.right: parent.right
-      visible: settingsPanel.activeTab === "features"
+      visible: settingsPanel.activeTab === "steam"
       spacing: 12
 
       Column {
         width: (parent.width - parent.spacing * 2 - 1) * 0.5
-        spacing: 8
+        spacing: 6
 
         Text {
-          text: "INTEGRATIONS"
+          text: "GRID"
           font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
           color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
         }
 
-        SettingsToggle {
+        SettingsInput {
           colors: settingsPanel.colors
-          label: "Matugen (Colour theming)"
-          checked: Config.matugenEnabled
-          onToggle: function(v) { settingsPanel._saveConfigKey("features.matugen", v) }
+          label: "Columns"
+          value: Config.steamColumns
+          min: 2; max: 12
+          onCommit: function(n) { settingsPanel._saveField("steamColumns", n) }
         }
 
-        SettingsToggle {
+        SettingsInput {
           colors: settingsPanel.colors
-          label: "Ollama (Local LLM colour & tagging)"
-          checked: Config.ollamaEnabled
-          onToggle: function(v) { settingsPanel._saveConfigKey("features.ollama", v) }
+          label: "Rows"
+          value: Config.steamRows
+          min: 1; max: 10
+          onCommit: function(n) { settingsPanel._saveField("steamRows", n) }
         }
 
-        SettingsToggle {
-          colors: settingsPanel.colors
-          label: "Steam Workshop browser"
-          checked: Config.steamEnabled
-          onToggle: function(v) { settingsPanel._saveConfigKey("features.steam", v) }
+        Text {
+          text: "THUMBNAIL"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+          topPadding: 8
         }
 
-        SettingsToggle {
+        SettingsInput {
           colors: settingsPanel.colors
-          label: "Wallhaven browser"
-          checked: Config.wallhavenEnabled
-          onToggle: function(v) { settingsPanel._saveConfigKey("features.wallhaven", v) }
+          label: "Width"
+          value: Config.steamThumbWidth
+          min: 100; max: 600
+          onCommit: function(n) { settingsPanel._saveField("steamThumbWidth", n) }
+        }
+
+        SettingsInput {
+          colors: settingsPanel.colors
+          label: "Height"
+          value: Config.steamThumbHeight
+          min: 60; max: 600
+          onCommit: function(n) { settingsPanel._saveField("steamThumbHeight", n) }
         }
       }
 
-      Rectangle {
-        width: 1; anchors.top: parent.top; anchors.bottom: parent.bottom
-        color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.primary.r, settingsPanel.colors.primary.g, settingsPanel.colors.primary.b, 0.1) : Qt.rgba(1, 1, 1, 0.08)
-      }
+      Rectangle { width: 1; height: parent.height; color: Qt.rgba(1, 1, 1, 0.08) }
 
       Column {
         width: (parent.width - parent.spacing * 2 - 1) * 0.5
-        spacing: 8
+        spacing: 6
 
         Text {
-          text: "OTHER"
+          text: "API"
           font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
           color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
         }
 
-        SettingsToggle {
+        SettingsTextInput {
           colors: settingsPanel.colors
-          label: "Mute wallpaper audio"
-          checked: Config.wallpaperMute
-          onToggle: function(v) { settingsPanel._saveConfigKey("wallpaperMute", v) }
+          label: "API key"
+          value: Config.steamApiKey
+          placeholder: "Steam API key"
+          onCommit: function(v) { settingsPanel._saveConfigKey("steam.apiKey", v) }
         }
 
-        SettingsToggle {
+        SettingsTextInput {
           colors: settingsPanel.colors
-          label: "Show colour dots"
-          checked: Config.wallpaperColorDots
-          onToggle: function(v) { settingsPanel._saveConfigKey("components.wallpaperSelector.showColorDots", v) }
+          label: "Username"
+          value: Config.steamUsername
+          placeholder: "Steam username (for steamcmd)"
+          onCommit: function(v) { settingsPanel._saveConfigKey("steam.username", v) }
         }
       }
     }

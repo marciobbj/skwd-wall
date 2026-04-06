@@ -36,6 +36,7 @@ Item {
 
   Column {
     id: contentCol
+    z: 10
     width: browser._gridTotalW
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
@@ -123,20 +124,25 @@ Item {
 
       Item { width: 8; height: 1 }
 
-      Repeater {
-        model: browser.whService && browser.whService.sorting === "toplist" ? [
+      FilterDropdown {
+        visible: browser.whService && browser.whService.sorting === "toplist"
+        colors: browser.colors; skew: 8
+        label: "PERIOD"
+        value: browser.whService ? browser.whService.topRange : "1M"
+        displayValue: {
+          if (!browser.whService) return "Month"
+          var map = { "1d": "Day", "1w": "Week", "1M": "Month", "3M": "3M", "6M": "6M", "1y": "Year" }
+          return map[browser.whService.topRange] || "Month"
+        }
+        model: [
           { key: "1d", label: "Day" },
           { key: "1w", label: "Week" },
           { key: "1M", label: "Month" },
           { key: "3M", label: "3M" },
           { key: "6M", label: "6M" },
           { key: "1y", label: "Year" }
-        ] : []
-        FilterButton {
-          colors: browser.colors; label: modelData.label; skew: 8
-          isActive: browser.whService ? browser.whService.topRange === modelData.key : false
-          onClicked: { browser.whService.topRange = modelData.key; browser.whService.search(1) }
-        }
+        ]
+        onSelected: function(key) { browser.whService.topRange = key; browser.whService.search(1) }
       }
 
       Item { width: 8; height: 1 }
@@ -152,6 +158,7 @@ Item {
     }
 
     Row {
+      z: 10
       spacing: -6
       anchors.horizontalCenter: parent.horizontalCenter
 
@@ -188,56 +195,46 @@ Item {
 
       Item { width: 14; height: 1 }
 
-      Text {
-        text: "MIN RES"
-        font.family: Style.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; font.letterSpacing: 1.2
-        color: browser.colors ? Qt.rgba(browser.colors.surfaceText.r, browser.colors.surfaceText.g, browser.colors.surfaceText.b, 0.35) : Qt.rgba(1,1,1,0.25)
-        anchors.verticalCenter: parent.verticalCenter
-      }
-
-      Item { width: 10; height: 1 }
-
-      Repeater {
-        model: [
-          { label: "Any",  value: "" },
-          { label: "1080p", value: "1920x1080" },
-          { label: "2K",   value: "2560x1440" },
-          { label: "4K",   value: "3840x2160" },
-          { label: "5K",   value: "5120x2880" },
-          { label: "8K",   value: "7680x4320" }
-        ]
-        FilterButton {
-          colors: browser.colors; label: modelData.label; skew: 8
-          isActive: browser.whService ? browser.whService.atleast === modelData.value : false
-          onClicked: { browser.whService.atleast = modelData.value; browser.whService.search(1) }
+      FilterDropdown {
+        colors: browser.colors; skew: 8
+        label: "MIN RES"
+        value: browser.whService ? browser.whService.atleast : ""
+        displayValue: {
+          if (!browser.whService || browser.whService.atleast === "") return "Any"
+          var map = { "1920x1080": "1080p", "2560x1440": "2K", "3840x2160": "4K", "5120x2880": "5K", "7680x4320": "8K" }
+          return map[browser.whService.atleast] || browser.whService.atleast
         }
+        model: [
+          { key: "",           label: "Any" },
+          { key: "1920x1080", label: "1080p" },
+          { key: "2560x1440", label: "2K" },
+          { key: "3840x2160", label: "4K" },
+          { key: "5120x2880", label: "5K" },
+          { key: "7680x4320", label: "8K" }
+        ]
+        onSelected: function(key) { browser.whService.atleast = key; browser.whService.search(1) }
       }
 
       Item { width: 14; height: 1 }
 
-      Text {
-        text: "RATIO"
-        font.family: Style.fontFamily; font.pixelSize: 9; font.weight: Font.Bold; font.letterSpacing: 1.2
-        color: browser.colors ? Qt.rgba(browser.colors.surfaceText.r, browser.colors.surfaceText.g, browser.colors.surfaceText.b, 0.35) : Qt.rgba(1,1,1,0.25)
-        anchors.verticalCenter: parent.verticalCenter
-      }
-
-      Item { width: 10; height: 1 }
-
-      Repeater {
-        model: [
-          { label: "Any",  value: "" },
-          { label: "16:9", value: "16x9" },
-          { label: "16:10", value: "16x10" },
-          { label: "21:9", value: "21x9" },
-          { label: "32:9", value: "32x9" },
-          { label: "4:3",  value: "4x3" }
-        ]
-        FilterButton {
-          colors: browser.colors; label: modelData.label; skew: 8
-          isActive: browser.whService ? browser.whService.ratios === modelData.value : false
-          onClicked: { browser.whService.ratios = modelData.value; browser.whService.search(1) }
+      FilterDropdown {
+        colors: browser.colors; skew: 8
+        label: "RATIO"
+        value: browser.whService ? browser.whService.ratios : ""
+        displayValue: {
+          if (!browser.whService || browser.whService.ratios === "") return "Any"
+          var map = { "16x9": "16:9", "16x10": "16:10", "21x9": "21:9", "32x9": "32:9", "4x3": "4:3" }
+          return map[browser.whService.ratios] || browser.whService.ratios
         }
+        model: [
+          { key: "",     label: "Any" },
+          { key: "16x9", label: "16:9" },
+          { key: "16x10", label: "16:10" },
+          { key: "21x9", label: "21:9" },
+          { key: "32x9", label: "32:9" },
+          { key: "4x3",  label: "4:3" }
+        ]
+        onSelected: function(key) { browser.whService.ratios = key; browser.whService.search(1) }
       }
     }
 

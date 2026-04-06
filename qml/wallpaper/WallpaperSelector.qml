@@ -246,7 +246,17 @@ Scope {
   Behavior on cardHeight { NumberAnimation { duration: Style.animExpand; easing.type: Easing.OutCubic } }
 
   property bool settingsOpen: false
-  property real _settingsShift: settingsOpen ? settingsPanelItem.height - 4 : 0
+  property real _settingsShift: {
+    if (!settingsOpen) return 0
+    var base = settingsPanelItem.height - 4
+    var naturalCardY = (selectorPanel.height - cardHeight) / 2
+    var settingsY = naturalCardY + base / 2 + filterBarBg.y - settingsPanelItem.height - 8
+    if (settingsY < 8) {
+      var extra = 2 * (8 - settingsY)
+      return base + extra
+    }
+    return base
+  }
   Behavior on _settingsShift { NumberAnimation { duration: 500; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
   property real lastContentX: 0
   property int lastIndex: 0
@@ -338,7 +348,8 @@ Scope {
       id: filterBarBg
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.top: parent.top
-      anchors.topMargin: 10
+      anchors.topMargin: 30
+      maxWidth: parent.width - 20
       z: 10
       colors: wallpaperSelector.colors
       service: service
@@ -366,8 +377,8 @@ Scope {
       steamWorkshopBrowserOpen: wallpaperSelector.steamWorkshopBrowserOpen
       tagCloudOpen: wallpaperSelector.tagCloudVisible
       onSettingsToggled: wallpaperSelector.settingsOpen = !wallpaperSelector.settingsOpen
-      onWallhavenToggled: { wallpaperSelector.steamWorkshopBrowserOpen = false; wallpaperSelector.wallhavenBrowserOpen = !wallpaperSelector.wallhavenBrowserOpen }
-      onSteamWorkshopToggled: { wallpaperSelector.wallhavenBrowserOpen = false; wallpaperSelector.steamWorkshopBrowserOpen = !wallpaperSelector.steamWorkshopBrowserOpen }
+      onWallhavenToggled: { wallpaperSelector.settingsOpen = false; wallpaperSelector.steamWorkshopBrowserOpen = false; wallpaperSelector.wallhavenBrowserOpen = !wallpaperSelector.wallhavenBrowserOpen }
+      onSteamWorkshopToggled: { wallpaperSelector.settingsOpen = false; wallpaperSelector.wallhavenBrowserOpen = false; wallpaperSelector.steamWorkshopBrowserOpen = !wallpaperSelector.steamWorkshopBrowserOpen }
       onTagCloudToggled: {
         wallpaperSelector.tagCloudVisible = !wallpaperSelector.tagCloudVisible
         if (!wallpaperSelector.tagCloudVisible) {
@@ -397,7 +408,7 @@ Scope {
     SettingsPanel {
       id: settingsPanelItem
       anchors.horizontalCenter: parent.horizontalCenter
-      y: cardContainer.y + filterBarBg.y - height - 8
+      y: Math.max(8, cardContainer.y + filterBarBg.y - height - 8)
       z: 999
       colors: wallpaperSelector.colors
       settingsOpen: wallpaperSelector.settingsOpen

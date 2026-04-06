@@ -56,9 +56,6 @@ QtObject {
     readonly property string ollamaUrl: Quickshell.env("SKWD_OLLAMA_URL") || (_data.ollama?.url ?? "")
     readonly property string ollamaModel: _data.ollama?.model ?? ""
 
-    readonly property string steamApiKey: Quickshell.env("STEAM_API_KEY") || (_data.steam?.apiKey ?? "")
-    readonly property string steamUsername: _data.steam?.username ?? ""
-
     readonly property bool matugenEnabled: _data.features?.matugen !== false
     readonly property bool ollamaEnabled: _data.features?.ollama !== false
     readonly property bool steamEnabled: _data.features?.steam !== false
@@ -153,7 +150,12 @@ QtObject {
     readonly property int wallhavenThumbHeight: _wallpaperSelector.wallhavenThumbHeight ?? (_isSmallScreen ? 124 : 169)
     readonly property string wallhavenApiKey: Quickshell.env("WALLHAVEN_API_KEY") || (_data.wallhaven?.apiKey ?? "")
 
-    readonly property bool wallpaperMute: _data.wallpaperMute !== false
+    readonly property int steamColumns: _wallpaperSelector.steamColumns ?? (_isSmallScreen ? 4 : 6)
+    readonly property int steamRows: _wallpaperSelector.steamRows ?? 3
+    readonly property int steamThumbWidth: _wallpaperSelector.steamThumbWidth ?? (_isSmallScreen ? 220 : 300)
+    readonly property int steamThumbHeight: _wallpaperSelector.steamThumbHeight ?? (_isSmallScreen ? 124 : 169)
+    readonly property string steamApiKey: Quickshell.env("STEAM_API_KEY") || (_data.steam?.apiKey ?? "")
+    readonly property string steamUsername: _data.steam?.username ?? ""
 
     readonly property var postProcessing: _data.postProcessing ?? []
     readonly property bool postProcessOnRestore: _data.postProcessOnRestore === true

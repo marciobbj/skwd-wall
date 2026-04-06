@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import ".."
 import "../services"
 
@@ -38,13 +39,41 @@ Item {
     signal tagCloudToggled()
 
     readonly property int _skew: 10
+    property real maxWidth: 99999
 
-    width: filterRow.width
-    height: filterRow.height
+    width: Math.min(filterRow.width, maxWidth)
+    height: filterRow.height + (filterFlick.contentWidth > filterFlick.width ? 10 : 0)
+
+    Flickable {
+        id: filterFlick
+        width: filterBar.width
+        height: filterRow.height
+        contentWidth: filterRow.width
+        contentHeight: filterRow.height
+        clip: contentWidth > width
+        flickableDirection: Flickable.HorizontalFlick
+        boundsBehavior: Flickable.StopAtBounds
+
+        ScrollBar.horizontal: ScrollBar {
+            id: filterScrollBar
+            y: filterFlick.height + 4
+            height: 4
+            visible: filterFlick.contentWidth > filterFlick.width
+            policy: ScrollBar.AlwaysOn
+            contentItem: Rectangle {
+                implicitHeight: 4
+                radius: 2
+                color: filterBar.colors ? filterBar.colors.primary : Qt.rgba(1, 1, 1, 1)
+            }
+            background: Rectangle {
+                implicitHeight: 4
+                radius: 2
+                color: filterBar.colors ? filterBar.colors.surfaceContainer : Qt.rgba(0, 0, 0, 0.5)
+            }
+        }
 
     Row {
         id: filterRow
-        anchors.centerIn: parent
         spacing: -_skew
 
         Repeater {
@@ -431,5 +460,6 @@ Item {
                 else WallpaperAnalysisService.start()
             }
         }
+    }
     }
 }
