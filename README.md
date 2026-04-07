@@ -204,6 +204,7 @@ Pass inputs to your modules via `specialArgs`, then in `configuration.nix`:
     ])
     inputs.awww.packages.${pkgs.stdenv.hostPlatform.system}.awww
     curl
+    file
     sqlite
     ffmpeg
     imagemagick
@@ -279,6 +280,7 @@ flake.nix
             inotify-tools 
             sqlite 
             curl
+            file
             awww.packages.${system}.awww
           ];
         in {
