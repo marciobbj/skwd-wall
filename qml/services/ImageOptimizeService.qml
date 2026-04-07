@@ -279,8 +279,8 @@ QtObject {
             ") ON CONFLICT(src) DO UPDATE SET dest=excluded.dest,preset=excluded.preset,format=excluded.format," +
             "width=excluded.width,height=excluded.height,orig_size=excluded.orig_size,new_size=excluded.new_size,optimized_at=excluded.optimized_at;")
         if (src !== dest) {
-            var oldKey = DbService.cacheKey(src)
-            var newKey = DbService.cacheKey(dest)
+            var oldKey = src.split("/").pop()
+            var newKey = dest.split("/").pop()
             DbService.exec(
                 "UPDATE meta SET key=" + DbService.sqlStr(newKey) + "," +
                 "name=" + DbService.sqlStr(dest.split("/").pop()) +

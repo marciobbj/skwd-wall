@@ -9,6 +9,7 @@ Item {
   id: settingsPanel
 
   property var colors
+  property var service
   property bool settingsOpen: false
   property string activeTab: "selector"
   property bool openDownward: false
@@ -1104,6 +1105,38 @@ Item {
           label: "Auto-delete after retention"
           checked: Config.autoDeleteImageTrash
           onToggle: function(v) { settingsPanel._saveConfigKey("performance.autoDeleteImageTrash", v) }
+        }
+
+        Item { width: 1; height: 8 }
+
+        Text {
+          text: "CACHE"
+          font.family: Style.fontFamily; font.pixelSize: 13; font.weight: Font.Bold; font.letterSpacing: 1.5
+          color: settingsPanel.colors ? settingsPanel.colors.tertiary : Qt.rgba(1, 1, 1, 0.5)
+        }
+
+        Text {
+          width: parent.width
+          text: "Clear all cached thumbnails and regenerate from scratch."
+          font.family: Style.fontFamily; font.pixelSize: 11; font.letterSpacing: 0.2
+          color: settingsPanel.colors ? Qt.rgba(settingsPanel.colors.surfaceVariantText.r, settingsPanel.colors.surfaceVariantText.g, settingsPanel.colors.surfaceVariantText.b, 0.8) : Qt.rgba(1, 1, 1, 0.5)
+          wrapMode: Text.WordWrap
+          lineHeight: 1.3
+        }
+
+        Item { width: 1; height: 2 }
+
+        Row {
+          spacing: 8
+
+          FilterButton {
+            colors: settingsPanel.colors
+            label: WallpaperCacheService.running ? "RESCANNING..." : "FORCE FULL RESCAN"
+            skew: 8
+            height: 28
+            enabled: !WallpaperCacheService.running
+            onClicked: settingsPanel.service.forceRescan()
+          }
         }
 
         Item { width: 1; height: 4 }

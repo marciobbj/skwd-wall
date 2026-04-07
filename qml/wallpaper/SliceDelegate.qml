@@ -107,7 +107,7 @@ Item {
 
         sourceComponent: Video {
             anchors.fill: parent
-            source: "file://" + delegateItem.videoPath
+            source: ImageService.fileUrl(delegateItem.videoPath)
             fillMode: VideoOutput.PreserveAspectCrop
             loops: MediaPlayer.Infinite
             muted: true
@@ -187,7 +187,7 @@ Item {
         Image {
             id: thumbImage
             anchors.fill: parent
-            source: model.thumb ? ("file://" + model.thumb) : ""
+            source: model.thumb ? ImageService.fileUrl(model.thumb) : ""
             fillMode: Image.PreserveAspectCrop
             smooth: true
             asynchronous: true
@@ -423,7 +423,7 @@ Item {
 
             Image {
                 anchors.fill: parent
-                source: "file://" + model.thumb
+                source: ImageService.fileUrl(model.thumb)
                 fillMode: Image.PreserveAspectCrop
                 opacity: 0.12
                 visible: !(delegateItem.videoActive && delegateItem.flipped)
@@ -738,7 +738,7 @@ Item {
                         skew: Math.abs(delegateItem.skewOffset) * 0.4
                         onClicked: {
                             var dir = model.path.substring(0, model.path.lastIndexOf("/"))
-                            Qt.openUrlExternally("file://" + dir)
+                            Qt.openUrlExternally(ImageService.fileUrl(dir))
                             delegateItem.flipped = false
                         }
                     }

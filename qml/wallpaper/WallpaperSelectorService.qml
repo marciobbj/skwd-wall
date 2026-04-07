@@ -136,13 +136,11 @@ QtObject {
 
   function getWallpaperTags(name, weId) {
     if (weId) return tagsDb[weId] || []
-    var dot = name.lastIndexOf(".")
-    var key = dot > 0 ? name.substring(0, dot) : name
-    return tagsDb[key] || []
+    return tagsDb[name] || []
   }
 
   function setWallpaperTags(name, weId, tags) {
-    var key = weId ? weId : (function() { var d = name.lastIndexOf("."); return d > 0 ? name.substring(0, d) : name }())
+    var key = weId ? weId : name
     var db = JSON.parse(JSON.stringify(tagsDb))
     db[key] = tags
     tagsDb = db
@@ -394,9 +392,7 @@ QtObject {
       MatugenCacheService.removeOne(key)
       var data = service._wallpaperData
       for (var i = data.length - 1; i >= 0; i--) {
-        var dot = data[i].name.lastIndexOf(".")
-        var itemKey = dot > 0 ? data[i].name.substring(0, dot) : data[i].name
-        if (itemKey === key) {
+        if (data[i].name === key) {
           data.splice(i, 1)
           service._wallpaperData = data
           service.updateFilteredModel(true)
@@ -445,6 +441,17 @@ QtObject {
       service.cacheReady = false
       service._wallpaperData = []
     }
+  }
+
+  function forceRescan() {
+    cacheReady = false
+    cacheLoading = true
+    cacheResult = ""
+    cacheProgress = 0
+    cacheTotal = 0
+    _wallpaperData = []
+    updateFilteredModel()
+    WallpaperCacheService.forceRescan()
   }
 
   property var _unsubscribeWE: Process { command: ["bash", "-c", "true"] }

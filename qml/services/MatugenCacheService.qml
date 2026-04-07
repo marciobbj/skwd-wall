@@ -105,7 +105,8 @@ QtObject {
 
         for (var i = 0; i < files.length; i++) {
             var path = files[i]
-            var key = DbService.cacheKey(path)
+            var key = (path.indexOf(service.thumbsDir) === 0 || path.indexOf(service.weThumbsDir) === 0)
+                ? DbService.cacheKey(path) : path.split("/").pop()
             if (seen[key] || _cache[key]) continue
             seen[key] = true
             queue.push({ path: path, key: key })

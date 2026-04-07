@@ -45,6 +45,13 @@ QtObject {
             " -q:v " + q + " -frames:v 1 -update 1 " + dest + " 2>/dev/null"
     }
 
+    function animatedWebpThumbnailCmd(srcFrame0, dest, width, height) {
+        var w = width || thumbWidth, h = height || thumbHeight
+        return "timeout --kill-after=5 15 magick " + srcFrame0 +
+            " -resize " + w + "x" + h + "^ -gravity center -extent " + w + "x" + h +
+            " -quality 85 " + dest + " 2>/dev/null"
+    }
+
     function encodeBase64Cmd(imagePath) {
         return "magick " + imagePath + " -resize " + ollamaWidth + "x" + ollamaHeight +
             " -quality " + ollamaJpegQuality + " jpeg:- 2>/dev/null | base64 -w0"
@@ -57,20 +64,25 @@ QtObject {
     }
 
     function smallThumbPath(thumbPath) {
-        return thumbPath.replace("/thumbs/", "/thumbs-sm/")
+        return thumbPath.  replace("/thumbs/", "/thumbs-sm/")
             .replace("/we-thumbs/", "/thumbs-sm/we-")
             .replace("/video-thumbs/", "/thumbs-sm/vid-")
+    }
+
+    function fileUrl(path) {
+        if (!path) return ""
+        return "file://" + path.split("/").map(encodeURIComponent).join("/")
     }
 
     function thumbKey(thumbPath, fallbackName) {
         if (typeof thumbPath === "string" && thumbPath.length > 0) {
             var fname = thumbPath.split("/").pop()
-            var dot = fname.lastIndexOf(".")
-            return dot > 0 ? fname.substring(0, dot) : fname
+            if (fname.toLowerCase().endsWith(".jpg"))
+                return fname.substring(0, fname.length - 4)
+            return fname
         }
         if (typeof fallbackName === "string" && fallbackName.length > 0) {
-            var fallbackDot = fallbackName.lastIndexOf(".")
-            return fallbackDot > 0 ? fallbackName.substring(0, fallbackDot) : fallbackName
+            return fallbackName
         }
         return ""
     }
