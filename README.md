@@ -233,7 +233,7 @@ quickshell ipc -p daemon.qml call wallpaper toggle
 </details>
 
 <details>
-  <summary>Install instructions by happyzxzxz, certified NixOS wizard. I haven't tested this but spreading the knowledge for you NixOS people!</summary>
+  <summary>Install instructions by happyzxzxz, certified NixOS wizard. I haven't tested this but I am very thankful for the help!</summary>
   So, the way to improve NixOS install is to use flakes. Basically you just add flakes in your experimental features in configuration.nix:
 nix.settings.experimental-features = [ "nix-command" "flakes" ]
 and then you create flake.nix file in your repository with this content:
