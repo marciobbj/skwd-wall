@@ -412,6 +412,7 @@ Scope {
       y: Math.max(8, cardContainer.y + filterBarBg.y - height - 8)
       z: 999
       colors: wallpaperSelector.colors
+      service: service
       settingsOpen: wallpaperSelector.settingsOpen
       onCloseRequested: { wallpaperSelector.settingsOpen = false; wallpaperSelector._focusActiveList() }
     }
@@ -1122,7 +1123,7 @@ Scope {
           Image {
             id: gridThumbImg
             anchors.fill: parent
-            source: gridThumbDelegate.model.thumb ? ("file://" + gridThumbDelegate.model.thumb) : ""
+            source: gridThumbDelegate.model.thumb ? ImageService.fileUrl(gridThumbDelegate.model.thumb) : ""
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             smooth: true
@@ -1140,7 +1141,7 @@ Scope {
 
               sourceComponent: Video {
                   anchors.fill: parent
-                  source: "file://" + gridThumbDelegate.videoPath
+                  source: ImageService.fileUrl(gridThumbDelegate.videoPath)
                   fillMode: VideoOutput.PreserveAspectCrop
                   loops: MediaPlayer.Infinite
                   muted: true
@@ -1228,7 +1229,7 @@ Scope {
             Text {
               id: gridTypeBadge
               anchors.centerIn: parent
-              text: gridThumbDelegate.model.type === "static" ? "PIC" : ((gridThumbDelegate.model.type === "video" || gridThumbDelegate.model.videoFile) ? "VID" : "WE")
+              text: (gridThumbDelegate.model.type === "video" || gridThumbDelegate.model.videoFile) ? "VID" : (gridThumbDelegate.model.type === "static" ? "PIC" : "WE")
               font.family: Style.fontFamily; font.pixelSize: 8; font.weight: Font.Bold
               color: wallpaperSelector.colors ? wallpaperSelector.colors.primary : "#ff8800"
             }
@@ -1421,7 +1422,7 @@ Scope {
             Image {
               anchors.fill: parent
               source: gridBackOverlay.overlayData && gridBackOverlay.overlayData.thumb
-                ? ("file://" + gridBackOverlay.overlayData.thumb) : ""
+                ? ImageService.fileUrl(gridBackOverlay.overlayData.thumb) : ""
               fillMode: Image.PreserveAspectCrop
               smooth: true; asynchronous: true; cache: false
               sourceSize.width: gridBackOverlay.bigW
@@ -1462,7 +1463,7 @@ Scope {
             Image {
               anchors.fill: parent
               source: gridBackOverlay.overlayData && gridBackOverlay.overlayData.thumb
-                ? ("file://" + gridBackOverlay.overlayData.thumb) : ""
+                ? ImageService.fileUrl(gridBackOverlay.overlayData.thumb) : ""
               fillMode: Image.PreserveAspectCrop; opacity: 0.08
               sourceSize.width: 120
               sourceSize.height: 68
@@ -1705,7 +1706,7 @@ Scope {
                   width: gridBackOverlay.overlayData && gridBackOverlay.overlayData.type === "we" ? (parent.width - parent.spacing * 2) / 3 : (parent.width - parent.spacing) / 2
                   colors: wallpaperSelector.colors
                   icon: "\u{f0208}"; label: "VIEW"
-                  onClicked: { if (!gridBackOverlay.overlayData) return; var p = gridBackOverlay.overlayData.path; Qt.openUrlExternally("file://" + p.substring(0, p.lastIndexOf("/"))); gridBackOverlay.hide() }
+                  onClicked: { if (!gridBackOverlay.overlayData) return; var p = gridBackOverlay.overlayData.path; Qt.openUrlExternally(ImageService.fileUrl(p.substring(0, p.lastIndexOf("/")))); gridBackOverlay.hide() }
                 }
 
                 ActionButton {
@@ -1915,7 +1916,7 @@ Scope {
             Image {
               anchors.fill: parent
               source: hexBackOverlay.overlayData && hexBackOverlay.overlayData.thumb
-                ? ("file://" + hexBackOverlay.overlayData.thumb) : ""
+                ? ImageService.fileUrl(hexBackOverlay.overlayData.thumb) : ""
               fillMode: Image.PreserveAspectCrop
               smooth: true
               asynchronous: true; cache: false
@@ -1970,7 +1971,7 @@ Scope {
             Image {
               anchors.fill: parent
               source: hexBackOverlay.overlayData && hexBackOverlay.overlayData.thumb
-                ? ("file://" + hexBackOverlay.overlayData.thumb) : ""
+                ? ImageService.fileUrl(hexBackOverlay.overlayData.thumb) : ""
               fillMode: Image.PreserveAspectCrop; opacity: 0.08
               sourceSize.width: 120
               sourceSize.height: 104
@@ -2213,7 +2214,7 @@ Scope {
                   width: hexBackOverlay.overlayData && hexBackOverlay.overlayData.type === "we" ? (parent.width - parent.spacing * 2) / 3 : (parent.width - parent.spacing) / 2
                   colors: wallpaperSelector.colors
                   icon: "\u{f0208}"; label: "VIEW"
-                  onClicked: { if (!hexBackOverlay.overlayData) return; var p = hexBackOverlay.overlayData.path; Qt.openUrlExternally("file://" + p.substring(0, p.lastIndexOf("/"))); hexBackOverlay.hide() }
+                  onClicked: { if (!hexBackOverlay.overlayData) return; var p = hexBackOverlay.overlayData.path; Qt.openUrlExternally(ImageService.fileUrl(p.substring(0, p.lastIndexOf("/")))); hexBackOverlay.hide() }
                 }
 
                 ActionButton {

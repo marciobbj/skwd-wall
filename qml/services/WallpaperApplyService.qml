@@ -87,7 +87,7 @@ QtObject {
 
     function _applyKdeVideo(path) {
         var plugin = Config.kdeVideoPlugin
-        var videoUrl = "file://" + path
+        var videoUrl = ImageService.fileUrl(path)
         var muteMode = wallpaperMute ? "4" : "0"
         var script =
             "var allDesktops = desktops();" +
