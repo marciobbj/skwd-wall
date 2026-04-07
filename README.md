@@ -1,20 +1,25 @@
-![Stars](https://img.shields.io/github/stars/liixini/skwd-wall?style=flat-square)
-![License](https://img.shields.io/github/license/liixini/skwd-wall?style=flat-square)
-![Last Commit](https://img.shields.io/github/last-commit/liixini/skwd-wall?style=flat-square)
-![Repo Size](https://img.shields.io/github/repo-size/liixini/skwd-wall?style=flat-square)
-![Issues](https://img.shields.io/github/issues/liixini/skwd-wall?style=flat-square)
+# Skwd-wall
+
+![Stars](https://img.shields.io/github/stars/liixini/skwd-wall?style=for-the-badge)
+![License](https://img.shields.io/github/license/liixini/skwd-wall?style=for-the-badge)
+![Last Commit](https://img.shields.io/github/last-commit/liixini/skwd-wall?style=for-the-badge)
+![Repo Size](https://img.shields.io/github/repo-size/liixini/skwd-wall?style=for-the-badge)
+![Issues](https://img.shields.io/github/issues/liixini/skwd-wall?style=for-the-badge)
 
 ![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=for-the-badge&logo=archlinux&logoColor=white)
 ![Fedora](https://img.shields.io/badge/Fedora-51A2DA?style=for-the-badge&logo=fedora&logoColor=white)
 ![NixOS](https://img.shields.io/badge/NixOS-5277C3?style=for-the-badge&logo=nixos&logoColor=white)
-
-# Skwd-wall
 
 <img width="2560" height="1439" alt="image" src="https://github.com/user-attachments/assets/157100e4-88e5-4542-8eba-fea0576e8801" />
 <img width="2562" height="1440" alt="image" src="https://github.com/user-attachments/assets/367a6a0d-a384-490d-abe2-98c053ff9ffc" />
 <img width="2558" height="1439" alt="image" src="https://github.com/user-attachments/assets/b73eff46-fa62-40cd-9109-9170adaa1dc5" />
 <img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/577611da-d03d-4bf7-88c3-69b782cac668" />
 <img width="2560" height="1439" alt="image" src="https://github.com/user-attachments/assets/a221355a-2530-42bb-a9c1-54d31062c7af" />
+
+### A video is a thousand pictures - Sun Tzu (probably)
+
+https://github.com/user-attachments/assets/c03ae4c8-76ea-42d0-8557-5db2465e6b2c
+
 
 
 
