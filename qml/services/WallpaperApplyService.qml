@@ -45,14 +45,14 @@ QtObject {
         console.log("WallpaperApplyService.applyStatic:", path, "wallpaperDir:", wallpaperDir)
         _saveState("static", path, "")
         if (Config.isKDE) {
-            awwwProcess.command = ["sh", "-c",
+            _staticWallpaperProcess.command = ["sh", "-c",
                 "pkill mpvpaper 2>/dev/null; " +
                 "pkill -9 -f '[l]inux-wallpaperengine' 2>/dev/null; " +
-                "pkill awww 2>/dev/null; pkill awww-daemon 2>/dev/null; " +
+                "pkill -x swaybg 2>/dev/null; " +
                 "rm -f " + JSON.stringify(videoDir + "/lockscreen-video.mp4") + "; " +
                 "plasma-apply-wallpaperimage " + JSON.stringify(path)]
         } else {
-            awwwProcess.command = ["sh", "-c",
+            _staticWallpaperProcess.command = ["sh", "-c",
                 "pkill mpvpaper 2>/dev/null; " +
                 "pkill -9 -f '[l]inux-wallpaperengine' 2>/dev/null; " +
                 "rm -f " + JSON.stringify(videoDir + "/lockscreen-video.mp4") + "; " +
@@ -61,9 +61,12 @@ QtObject {
                 "  for i in 1 2 3 4 5; do sleep 0.3; pgrep -x awww-daemon >/dev/null && break; done; " +
                 "fi; " +
                 "awww img " + JSON.stringify(path) +
-                " --transition-type wipe --transition-angle 45 --transition-duration 0.5"]
+                " --transition-type wipe --transition-angle 45 --transition-duration 0.5; " +
+                "ln -nsf " + JSON.stringify(path) + " " + JSON.stringify(_omarchyBackgroundLink()) + "; " +
+                "pkill -x swaybg 2>/dev/null; " +
+                "setsid uwsm-app -- swaybg -i " + JSON.stringify(_omarchyBackgroundLink()) + " -m fill >/dev/null 2>&1 &"]
         }
-        awwwProcess.running = true
+        _staticWallpaperProcess.running = true
         _extractAndTheme(path)
         wallpaperApplied("static", _basename(path), path)
     }
@@ -74,7 +77,6 @@ QtObject {
             _applyKdeVideo(path)
         } else {
             mpvProcess.command = ["sh", "-c",
-                "pkill awww 2>/dev/null; pkill awww-daemon 2>/dev/null; " +
                 "pkill mpvpaper 2>/dev/null; " +
                 "pkill -9 -f '[l]inux-wallpaperengine' 2>/dev/null; " +
                 "rm -f " + JSON.stringify(videoDir + "/lockscreen-video.mp4") + "; " +
@@ -166,25 +168,22 @@ QtObject {
         killProcess.command = ["sh", "-c",
             "pkill -9 -f '[l]inux-wallpaperengine' 2>/dev/null; " +
             "pkill mpvpaper 2>/dev/null; " +
-            "pkill awww 2>/dev/null; " +
-            "pkill awww-daemon 2>/dev/null; " +
             "rm -f " + JSON.stringify(videoDir + "/lockscreen-video.mp4") + "; " +
             "sleep 2; true"]
         killProcess.running = true
     }
 
-    property var _awwwStderr: []
-    property var _awwwProcess: Process {
-        id: awwwProcess
+    property var _staticWallpaperStderr: []
+    property var _staticWallpaperProcess: Process {
+        id: staticWallpaperProcess
         onExited: function(code, status) {
-            console.log("WallpaperApplyService: awww exited code=" + code + " status=" + status)
-            if (_awwwStderr.length > 0) console.log("WallpaperApplyService: awww stderr:", _awwwStderr.join(""))
-            _awwwStderr = []
+            console.log("WallpaperApplyService: static wallpaper process exited code=" + code + " status=" + status)
+            if (_staticWallpaperStderr.length > 0) console.log("WallpaperApplyService: static wallpaper stderr:", _staticWallpaperStderr.join(""))
+            _staticWallpaperStderr = []
         }
-        stderr: SplitParser { onRead: data => service._awwwStderr.push(data) }
+        stderr: SplitParser { onRead: data => service._staticWallpaperStderr.push(data) }
     }
     property var _mpvProcess: Process { id: mpvProcess }
-    property var _awwwDaemonProcess: Process { id: awwwDaemonProcess }
 
     property var _weStderr: []
     property var _weProcess: Process {
@@ -443,5 +442,9 @@ QtObject {
     function _basename(path) {
         var parts = path.split("/")
         return parts[parts.length - 1]
+    }
+
+    function _omarchyBackgroundLink() {
+        return Quickshell.env("HOME") + "/.config/omarchy/current/background"
     }
 }
