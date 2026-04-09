@@ -159,7 +159,7 @@ yay -S quickshell-git awww-bin matugen-bin ttf-material-design-icons-desktop-git
 
 Optional: `sudo pacman -S ollama && yay -S mpvpaper steamcmd linux-wallpaperengine-git`
 
-`git clone https://github.com/liixini/skwd-wall && cd skwd-wall`
+```git clone https://github.com/liixini/skwd-wall && cd skwd-wall
 
 # the -p part is for PATH, extend to match the path where you find daemon.qml
 # set this up with your exec once of choice, such as a .desktop file, in your compositor etc.
@@ -167,6 +167,7 @@ quickshell -p daemon.qml
 
 # this is the part you keybind somehow which launches the UI!
 quickshell ipc -p daemon.qml call wallpaper toggle
+```
 
 Note that yay is an AUR (Arch User Repository) helper, so if you don't have that you will need to install it or alternatively another helper you prefer.
 
