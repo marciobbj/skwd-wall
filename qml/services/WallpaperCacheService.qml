@@ -42,6 +42,21 @@ QtObject {
         _mkdirs.running = true
     }
 
+    function forceRescan() {
+        if (running) return
+        DbService.exec("DELETE FROM meta")
+        _forceCleanProcess.running = true
+    }
+
+    property var _forceCleanProcess: Process {
+        command: ["sh", "-c",
+            "rm -rf " + DbService.shellQuote(service.thumbsDir) + "/* " +
+            DbService.shellQuote(service.thumbsSmDir) + "/* " +
+            DbService.shellQuote(service.videoCacheDir) + "/* " +
+            DbService.shellQuote(service.weCacheDir) + "/* 2>/dev/null; true"]
+        onExited: service.rebuild(null)
+    }
+
     function processFiles(files) {
         if (!files || files.length === 0) return
         if (running) {
@@ -50,7 +65,7 @@ QtObject {
         }
         for (var i = 0; i < files.length; i++) {
             var f = files[i]
-            var thumbName = f.name.replace(/\//g, "--").replace(/\.[^.]*$/, ".jpg")
+            var thumbName = f.name.replace(/\//g, "--") + ".jpg"
             var thumbDir = f.type === "video" ? videoCacheDir : thumbsDir
             var item = {
                 type: f.type, src: f.src, name: f.name,
@@ -106,8 +121,7 @@ QtObject {
         var keys = []
         for (var i = 0; i < files.length; i++) {
             var f = files[i]
-            var dot = f.name.lastIndexOf(".")
-            var key = dot > 0 ? f.name.substring(0, dot) : f.name
+            var key = f.name
             keys.push(key)
         }
         DbService.exec("DELETE FROM meta WHERE key IN (" +
@@ -140,9 +154,21 @@ QtObject {
         var thumbSm = DbService.shellQuote(thumbSmPath)
 
         var statCmd = "stat -c '%Y' " + src + " 2>/dev/null || echo 0"
+        var isWebp = item.type === "static" && /\.webp$/i.test(item.name)
         var thumbCmd
         if (item.type === "static") {
-            thumbCmd = ImageService.thumbnailCmd(src, thumb) + "; " +
+            var genThumb
+            if (isWebp) {
+                var srcFrame0 = DbService.shellQuote(item.src + "[0]")
+                genThumb = "if head -c 1024 " + src + " 2>/dev/null | grep -q ANIM; then " +
+                    "echo ANIMWEBP:yes; " +
+                    ImageService.animatedWebpThumbnailCmd(srcFrame0, thumb) + "; " +
+                    "else " +
+                    ImageService.thumbnailCmd(src, thumb) + "; fi"
+            } else {
+                genThumb = ImageService.thumbnailCmd(src, thumb)
+            }
+            thumbCmd = genThumb + "; " +
                 "[ -f " + thumb + " ] && " + ImageService.thumbnailCmd(thumb, thumbSm, ImageService.smallThumbWidth, ImageService.smallThumbHeight, ImageService.smallThumbQuality) + "; " +
                 "[ -f " + thumb + " ] && " + ImageService.hueExtractCmd(thumb)
         } else if (item.type === "we") {
@@ -235,13 +261,13 @@ QtObject {
             'find "$wall_dir" -type f ' + ImageService.findExtPattern(ImageService.imageExtensions) + ' ! -name "wallpaper.jpg" -print0 2>/dev/null | sort -z | while IFS= read -r -d "" img; do\n' +
             '  name="${img#$wall_dir/}"\n' +
             '  mtime=$(stat -c "%Y" "$img" 2>/dev/null || echo 0)\n' +
-            '  thumb_name=$(echo "$name" | sed "s|/|--|g" | sed "s|\\.[^.]*$|.jpg|")\n' +
+            '  thumb_name="$(echo "$name" | sed "s|/|--|g").jpg"\n' +
             '  echo "static\t$img\t$name\t$mtime\t$thumb_dir/$thumb_name"\n' +
             'done\n' +
             'find "$vid_dir" -type f ' + ImageService.findExtPattern(ImageService.videoExtensions) + ' -print0 2>/dev/null | sort -z | while IFS= read -r -d "" vid; do\n' +
             '  name="${vid#$vid_dir/}"\n' +
             '  mtime=$(stat -c "%Y" "$vid" 2>/dev/null || echo 0)\n' +
-            '  thumb_name=$(echo "$name" | sed "s|/|--|g" | sed "s|\\.[^.]*$|.jpg|")\n' +
+            '  thumb_name="$(echo "$name" | sed "s|/|--|g").jpg"\n' +
             '  echo "video\t$vid\t$name\t$mtime\t$vid_cache/$thumb_name"\n' +
             'done\n' +
             'if [ -n "$we_dir" ] && [ -d "$we_dir" ]; then\n' +
@@ -401,8 +427,20 @@ QtObject {
         var thumbSm = DbService.shellQuote(thumbSmPath)
 
         if (item.type === "static") {
+            var isWebp = /\.webp$/i.test(item.name)
+            var genThumb
+            if (isWebp) {
+                var srcFrame0 = DbService.shellQuote(item.src + "[0]")
+                genThumb = "if head -c 1024 " + src + " 2>/dev/null | grep -q ANIM; then " +
+                    "echo ANIMWEBP:yes; " +
+                    ImageService.animatedWebpThumbnailCmd(srcFrame0, thumb) + "; " +
+                    "else " +
+                    ImageService.thumbnailCmd(src, thumb) + "; fi"
+            } else {
+                genThumb = ImageService.thumbnailCmd(src, thumb)
+            }
             return ["sh", "-c",
-                ImageService.thumbnailCmd(src, thumb) + "; " +
+                genThumb + "; " +
                 "[ -f " + thumb + " ] && " + ImageService.thumbnailCmd(thumb, thumbSm, ImageService.smallThumbWidth, ImageService.smallThumbHeight, ImageService.smallThumbQuality) + "; " +
                 "[ -f " + thumb + " ] && " + ImageService.hueExtractCmd(thumb)]
         } else if (item.type === "video") {
@@ -450,7 +488,8 @@ QtObject {
             entry.videoFile = videoLine ? videoLine.substring(10).trim() : ""
         } else {
             entry.id = ""
-            entry.videoFile = (item.type === "video") ? item.src : ""
+            var animWebpLine = stdout.split("\n").find(function(l) { return l.indexOf("ANIMWEBP:") === 0 })
+            entry.videoFile = (item.type === "video" || animWebpLine) ? item.src : ""
         }
         return entry
     }

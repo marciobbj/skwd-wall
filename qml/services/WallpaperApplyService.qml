@@ -103,7 +103,7 @@ QtObject {
 
     function _applyKdeVideo(path) {
         var plugin = Config.kdeVideoPlugin
-        var videoUrl = "file://" + path
+        var videoUrl = ImageService.fileUrl(path)
         var muteMode = wallpaperMute ? "4" : "0"
         var script =
             "var allDesktops = desktops();" +
@@ -345,7 +345,7 @@ QtObject {
         var cmd = "nohup setsid linux-wallpaperengine " + audioFlag +
             " --no-fullscreen-pause --noautomute" + screenArgs +
             " --clamp border" +
-            assetsArg + " " + JSON.stringify(weId) +
+            assetsArg + " " + JSON.stringify(service.weDir + "/" + weId) +
             " </dev/null >/dev/null 2>&1 &"
         console.log("WallpaperApplyService: launching WE scene:", cmd)
         weProcess.command = ["sh", "-c", cmd]
@@ -457,7 +457,7 @@ QtObject {
         var hashFiles = outputs.map(function(f) { return JSON.stringify(f) }).join(" ")
         var before = hashFiles ? "_BEFORE=$(md5sum " + hashFiles + " 2>/dev/null | sort); " : ""
         var imgArg = " image -t " + JSON.stringify(matugenScheme) +
-            " --source-color-index 0 " + JSON.stringify(imagePath)
+            " $(matugen --version 2>/dev/null | grep -qE '^matugen [4-9]' && echo '--source-color-index 0') " + JSON.stringify(imagePath)
         var defaultCfg = Config.defaultMatugenConfig
         var matugen = "command -v matugen >/dev/null && { " +
             "matugen -c " + JSON.stringify(_matugenConfig) + imgArg + "; " +

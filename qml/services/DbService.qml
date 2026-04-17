@@ -19,6 +19,13 @@ QtObject {
             tx.executeSql("CREATE TABLE IF NOT EXISTS video_convert(src TEXT PRIMARY KEY,dest TEXT NOT NULL,preset TEXT NOT NULL,codec TEXT,width INTEGER,height INTEGER,orig_size INTEGER,new_size INTEGER,converted_at INTEGER)")
             tx.executeSql("CREATE TABLE IF NOT EXISTS state(key TEXT PRIMARY KEY, val TEXT)")
         })
+        _db.transaction(function(tx) {
+            var rs = tx.executeSql("SELECT val FROM state WHERE key='schema_version'")
+            if (rs.rows.length === 0 || parseInt(rs.rows.item(0).val) < 2) {
+                tx.executeSql("DELETE FROM meta")
+                tx.executeSql("INSERT OR REPLACE INTO state(key,val) VALUES('schema_version','2')")
+            }
+        })
         ready = true
     }
 
@@ -53,7 +60,8 @@ QtObject {
 
     function cacheKey(path) {
         var filename = path.split("/").pop()
-        var dot = filename.lastIndexOf(".")
-        return dot > 0 ? filename.substring(0, dot) : filename
+        if (filename.toLowerCase().endsWith(".jpg"))
+            return filename.substring(0, filename.length - 4)
+        return filename
     }
 }
