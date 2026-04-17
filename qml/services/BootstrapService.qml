@@ -61,6 +61,7 @@ QtObject {
             "mkdir -p " + _q(wpDir),
             "mkdir -p " + _q(scriptsDir),
             "mkdir -p " + _q(templateDir),
+            "rm -f " + _q(wpDir + "/wallpaper.jpg"),
             "",
             "# Seed config.json if missing",
             "if [ ! -f " + _q(configDir + "/config.json") + " ]; then",

@@ -12,6 +12,8 @@ QtObject {
     readonly property string weDir: Config.weDir
     readonly property string weAssetsDir: Config.weAssetsDir
     readonly property string cacheDir: Config.cacheDir
+    readonly property string _currentWallpaperPath: cacheDir + "/wallpaper/current.jpg"
+    readonly property string _omarchyBackgroundPath: Quickshell.env("HOME") + "/.config/omarchy/current/background"
     readonly property string mainMonitor: Config.mainMonitor
     readonly property string ollamaUrl: Config.ollamaUrl
     readonly property string ollamaModel: Config.ollamaModel
@@ -19,6 +21,17 @@ QtObject {
     property bool wallpaperMute: true
     readonly property string _matugenConfig: cacheDir + "/matugen-config.toml"
     property bool _stateFileLoaded: false
+    property string _restoreProbeStdout: ""
+    property var _restoreProbe: Process {
+        id: restoreProbe
+        stdout: SplitParser {
+            splitMarker: ""
+            onRead: data => service._restoreProbeStdout += data
+        }
+        onExited: function(code) {
+            service._handleRestoreProbeExit(code)
+        }
+    }
     property var _stateFile: FileView {
         path: service.cacheDir + "/last-wallpaper.json"
         preload: true
@@ -34,6 +47,7 @@ QtObject {
             if (data.matugen.schemeType) matugenScheme = data.matugen.schemeType
         }
         if (data.wallpaperMute !== undefined) wallpaperMute = data.wallpaperMute
+        _cleanupLegacyWallpaperFile()
     }
 
     property bool _restoring: false
@@ -62,9 +76,9 @@ QtObject {
                 "fi; " +
                 "awww img " + JSON.stringify(path) +
                 " --transition-type wipe --transition-angle 45 --transition-duration 0.5; " +
-                "ln -nsf " + JSON.stringify(path) + " " + JSON.stringify(_omarchyBackgroundLink()) + "; " +
+                "ln -nsf " + JSON.stringify(_currentWallpaperPath) + " " + JSON.stringify(_omarchyBackgroundPath) + "; " +
                 "pkill -x swaybg 2>/dev/null; " +
-                "setsid uwsm-app -- swaybg -i " + JSON.stringify(_omarchyBackgroundLink()) + " -m fill >/dev/null 2>&1 &"]
+                "setsid uwsm-app -- swaybg -i " + JSON.stringify(_currentWallpaperPath) + " -m fill >/dev/null 2>&1 &"]
         }
         _staticWallpaperProcess.running = true
         _extractAndTheme(path)
@@ -117,6 +131,7 @@ QtObject {
     }
 
     property bool _restoreRequested: false
+    property var _restoreState: null
 
     function restore() {
         _restoreRequested = true
@@ -128,21 +143,89 @@ QtObject {
         _restoreRequested = false
         var text = _stateFile.text().trim()
         if (!text) return
-        _restoring = true
         try {
-            var state = JSON.parse(text)
-            if (state.type === "static" && state.path)
-                applyStatic(state.path)
-            else if (state.type === "video" && state.path)
-                applyVideo(state.path)
-            else if (state.type === "we" && state.we_id)
-                applyWE(state.we_id)
-            else
+            _restoreState = JSON.parse(text)
+            if (_restoreState.type === "static" && _restoreState.path) {
+                _restoring = true
+                _restoreProbeStdout = ""
+                _restoreProbe.command = ["sh", "-c",
+                    "current=$(readlink -f " + JSON.stringify(_omarchyBackgroundPath) + " 2>/dev/null || true); " +
+                    "internal=$(readlink -f " + JSON.stringify(_currentWallpaperPath) + " 2>/dev/null || true); " +
+                    "printf '%s\n%s\n' \"$current\" \"$internal\""
+                ]
+                _restoreProbe.running = true
+            }
+            else if (_restoreState.type === "video" && _restoreState.path) {
+                _restoring = true
+                _restoreProbeStdout = ""
+                _restoreProbe.command = ["sh", "-c",
+                    "current=$(readlink -f " + JSON.stringify(_omarchyBackgroundPath) + " 2>/dev/null || true); " +
+                    "internal=$(readlink -f " + JSON.stringify(_currentWallpaperPath) + " 2>/dev/null || true); " +
+                    "printf '%s\n%s\n' \"$current\" \"$internal\""
+                ]
+                _restoreProbe.running = true
+            }
+            else if (_restoreState.type === "we" && _restoreState.we_id) {
+                _restoring = true
+                _restoreProbeStdout = ""
+                _restoreProbe.command = ["sh", "-c",
+                    "current=$(readlink -f " + JSON.stringify(_omarchyBackgroundPath) + " 2>/dev/null || true); " +
+                    "internal=$(readlink -f " + JSON.stringify(_currentWallpaperPath) + " 2>/dev/null || true); " +
+                    "printf '%s\n%s\n' \"$current\" \"$internal\""
+                ]
+                _restoreProbe.running = true
+            }
+            else {
+                _restoreState = null
                 _restoring = false
+            }
         } catch(e) {
             console.log("WallpaperApplyService: restore failed:", e)
+            _restoreState = null
             _restoring = false
         }
+    }
+
+    function _handleRestoreProbeExit(code) {
+        var lines = _restoreProbeStdout.trim().split("\n")
+        var current = lines[0] || ""
+        var internal = lines[1] || ""
+        _restoreProbeStdout = ""
+
+        if (!internal) {
+            console.log("WallpaperApplyService: skipping restore, internal wallpaper missing")
+            _restoring = false
+            return
+        }
+
+        if (current && current !== internal) {
+            console.log("WallpaperApplyService: skipping restore, Omarchy background differs")
+            _restoring = false
+            return
+        }
+
+        var state = _restoreState
+        _restoreState = null
+        if (!state) {
+            _restoring = false
+            return
+        }
+
+        if (state.type === "static" && state.path)
+            applyStatic(state.path)
+        else if (state.type === "video" && state.path)
+            applyVideo(state.path)
+        else if (state.type === "we" && state.we_id)
+            applyWE(state.we_id)
+        else
+            _restoring = false
+    }
+
+    function _cleanupLegacyWallpaperFile() {
+        var proc = reloadComponent.createObject(service)
+        proc.command = ["sh", "-c", "rm -f " + JSON.stringify(wallpaperDir + "/wallpaper.jpg")]
+        proc.exited.connect(function() { proc.destroy() })
+        proc.running = true
     }
 
     function _saveState(type, path, weId) {
@@ -297,7 +380,7 @@ QtObject {
 
     function _extractAndTheme(path) {
         _copyAndTheme.command = ["sh", "-c",
-            "cp " + JSON.stringify(path) + " " + JSON.stringify(wallpaperDir + "/wallpaper.jpg") + " 2>/dev/null; " +
+            "cp " + JSON.stringify(path) + " " + JSON.stringify(_currentWallpaperPath) + " 2>/dev/null; " +
             _matugenCmd(path)]
         _copyAndTheme.running = true
     }
@@ -311,7 +394,8 @@ QtObject {
             "mkdir -p " + JSON.stringify(thumbDir) + "; " +
             "[ -f " + JSON.stringify(thumbPath) + " ] || " +
             ImageService.videoThumbnailCmd(JSON.stringify(videoPath), JSON.stringify(thumbPath), 0) + "; " +
-            "cp " + JSON.stringify(thumbPath) + " " + JSON.stringify(wallpaperDir + "/wallpaper.jpg") + " 2>/dev/null; " +
+            "ln -nsf " + JSON.stringify(_currentWallpaperPath) + " " + JSON.stringify(_omarchyBackgroundPath) + "; " +
+            "cp " + JSON.stringify(thumbPath) + " " + JSON.stringify(_currentWallpaperPath) + " 2>/dev/null; " +
             _matugenCmd(thumbPath)]
         _videoThumbProcess.running = true
     }
@@ -337,7 +421,8 @@ QtObject {
             var preview = _weFindPreviewStdout.join("").trim().split("\n")[0]
             if (preview) {
                 _copyAndTheme.command = ["sh", "-c",
-                    "cp " + JSON.stringify(preview) + " " + JSON.stringify(service.wallpaperDir + "/wallpaper.jpg") + " 2>/dev/null; " +
+                    "ln -nsf " + JSON.stringify(service._currentWallpaperPath) + " " + JSON.stringify(service._omarchyBackgroundPath) + "; " +
+                    "cp " + JSON.stringify(preview) + " " + JSON.stringify(service._currentWallpaperPath) + " 2>/dev/null; " +
                     service._matugenCmd(preview)]
                 _copyAndTheme.running = true
             }
@@ -444,7 +529,4 @@ QtObject {
         return parts[parts.length - 1]
     }
 
-    function _omarchyBackgroundLink() {
-        return Quickshell.env("HOME") + "/.config/omarchy/current/background"
-    }
 }

@@ -20,12 +20,12 @@ QtObject {
         if (!text) return
         try {
             var d = JSON.parse(text)
-            colors.primary = d.primary ?? "#ffb4ab"
+            colors.primary = d.primary ?? "#ff8800"
             colors.primaryText = d.primaryText ?? "#690005"
             colors.primaryContainer = d.primaryContainer ?? "#b12723"
             colors.primaryContainerText = d.primaryContainerText ?? "#ffffff"
             colors.primaryForeground = d.onPrimary ?? "#690005"
-            colors.secondary = d.secondary ?? "#ffb4ab"
+            colors.secondary = d.secondary ?? "#ff8800"
             colors.secondaryText = d.secondaryText ?? "#5b1915"
             colors.secondaryContainer = d.secondaryContainer ?? "#792f29"
             colors.secondaryContainerText = d.secondaryContainerText ?? "#ffd7d2"
@@ -40,7 +40,7 @@ QtObject {
             colors.surfaceVariant = d.surfaceVariant ?? "#5a413e"
             colors.surfaceVariantText = d.surfaceVariantText ?? "#e2beba"
             colors.surfaceContainer = d.surfaceContainer ?? "#2c1f1d"
-            colors.error = d.error ?? "#ffb4ab"
+            colors.error = d.error ?? "#ff8800"
             colors.errorText = d.errorText ?? "#690005"
             colors.errorContainer = d.errorContainer ?? "#93000a"
             colors.errorContainerText = d.errorContainerText ?? "#ffdad6"
@@ -54,13 +54,13 @@ QtObject {
             console.log("Colors: Error parsing colors.json:", e)
         }
     }
-    property color primary: "#ffb4ab"
+    property color primary: "#ff8800"
     property color primaryText: "#690005"
     property color primaryContainer: "#b12723"
     property color primaryContainerText: "#ffffff"
     property color primaryForeground: "#690005"
 
-    property color secondary: "#ffb4ab"
+    property color secondary: "#ff8800"
     property color secondaryText: "#5b1915"
     property color secondaryContainer: "#792f29"
     property color secondaryContainerText: "#ffd7d2"
@@ -78,7 +78,7 @@ QtObject {
     property color surfaceVariantText: "#e2beba"
     property color surfaceContainer: "#2c1f1d"
 
-    property color error: "#ffb4ab"
+    property color error: "#ff8800"
     property color errorText: "#690005"
     property color errorContainer: "#93000a"
     property color errorContainerText: "#ffdad6"
